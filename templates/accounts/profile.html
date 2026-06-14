@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Mi Perfil – ProfeApp{% endblock %}
+{% block page_title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="pa-card mb-4">
+      <div class="pa-card-header">
+        <div class="pa-avatar" style="width:48px;height:48px;font-size:1rem;">
+          {% if user.avatar %}<img src="{{ user.avatar.url }}" alt="">
+          {% else %}{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}{% endif %}
+        </div>
+        <div>
+          <h6 style="margin:0;">{{ user.get_full_name }}</h6>
+          <div style="font-size:.75rem;color:#6c757d;">{{ user.get_role_display }} · {{ user.username }}</div>
+        </div>
+      </div>
+      <div class="pa-card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-bold">Nombre</label>
+              <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Apellido</label>
+              <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ user.email }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">RUT</label>
+              <input type="text" name="rut" class="form-control" value="{{ user.rut }}" placeholder="12345678-9">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Teléfono</label>
+              <input type="text" name="phone" class="form-control" value="{{ user.phone }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Foto de perfil</label>
+              <input type="file" name="avatar" class="form-control" accept="image/*">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Biografía</label>
+              <textarea name="bio" class="form-control" rows="3" style="border-radius:10px;">{{ user.bio }}</textarea>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-pa">Guardar cambios</button>
+            <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-secondary" style="border-radius:8px;">Cambiar contraseña</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

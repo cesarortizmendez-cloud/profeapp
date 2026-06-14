@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ msg.subject }} – ProfeApp{% endblock %}
+{% block page_title %}Mensaje{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="pa-card mb-3">
+      <div class="pa-card-header">
+        <div>
+          <h5 style="margin:0; font-family:'Space Grotesk',sans-serif;">{{ msg.subject }}</h5>
+          {% if msg.course %}<span class="badge" style="background:#eef0ff; color:#4361ee; font-size:.72rem;">{{ msg.course.name }}</span>{% endif %}
+        </div>
+        <a href="{% url 'messaging:inbox' %}" class="btn btn-sm btn-outline-secondary ms-auto" style="border-radius:8px;">← Volver</a>
+      </div>
+      <div class="pa-card-body">
+        <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid #f0f1f7;">
+          <div class="pa-avatar" style="width:44px;height:44px;">
+            {{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}
+          </div>
+          <div>
+            <div style="font-weight:600;">{{ msg.sender.get_full_name }}</div>
+            <div style="font-size:.75rem; color:#6c757d;">
+              {{ msg.sent_at|date:"l d \d\e F \d\e Y · H:i" }}
+              &nbsp;·&nbsp; Para: {{ msg.recipient.get_full_name }}
+            </div>
+          </div>
+        </div>
+        <div style="font-size:.9rem; line-height:1.7; white-space:pre-line;">{{ msg.body }}</div>
+      </div>
+    </div>
+
+    <!-- Replies -->
+    {% for reply in replies %}
+    <div class="pa-card mb-3" style="margin-left:2rem; border-left:3px solid #4361ee;">
+      <div class="pa-card-body">
+        <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem;">
+          <div class="pa-avatar" style="width:36px;height:36px;font-size:.75rem;">
+            {{ reply.sender.first_name|first|upper }}{{ reply.sender.last_name|first|upper }}
+          </div>
+          <div>
+            <div style="font-weight:600; font-size:.875rem;">{{ reply.sender.get_full_name }}</div>
+            <div style="font-size:.72rem; color:#6c757d;">{{ reply.sent_at|date:"d/m/Y · H:i" }}</div>
+          </div>
+        </div>
+        <div style="font-size:.875rem; line-height:1.7; white-space:pre-line;">{{ reply.body }}</div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Reply form -->
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-reply-fill text-primary"></i>
+        <h6>Responder</h6>
+      </div>
+      <div class="pa-card-body">
+        <form method="post" action="{% url 'messaging:reply' msg.pk %}">
+          {% csrf_token %}
+          <textarea name="body" class="form-control mb-3" rows="4" placeholder="Escribe tu respuesta..." required style="border-radius:10px;"></textarea>
+          <button type="submit" class="btn btn-pa">
+            <i class="bi bi-send me-1"></i>Enviar respuesta
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}{{ course.name }} – ProfeApp{% endblock %}
+{% block page_title %}{{ course.name }}{% endblock %}
+
+{% block topbar_actions %}
+  {% if user.is_professor %}
+  <a href="{% url 'grades:gradebook' course.pk %}" class="btn-pa btn">
+    <i class="bi bi-table me-1"></i>Libro de Notas
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div style="background: linear-gradient(135deg, {{ course.color }}, {{ course.color }}99); border-radius:16px; padding:2rem; color:white; margin-bottom:1.5rem;">
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+    <div>
+      <div style="font-size:.8rem; opacity:.7; margin-bottom:.25rem;">
+        {% if course.university %}{{ course.university.name }} &nbsp;·&nbsp; {% endif %}
+        {{ course.get_semester_display }} {{ course.year }}
+      </div>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-weight:700; margin:0;">{{ course.name }}</h2>
+      {% if course.code %}<span style="background:rgba(255,255,255,.2); border-radius:6px; padding:.2em .6em; font-size:.8rem; margin-top:.5rem; display:inline-block;">{{ course.code }}</span>{% endif %}
+      {% if course.section %}<span style="background:rgba(255,255,255,.2); border-radius:6px; padding:.2em .6em; font-size:.8rem; margin-top:.5rem; display:inline-block; margin-left:.25rem;">Sección {{ course.section }}</span>{% endif %}
+      {% if course.description %}<p style="opacity:.8; font-size:.875rem; margin-top:.75rem; max-width:500px;">{{ course.description }}</p>{% endif %}
+    </div>
+    {% if user.is_professor %}
+    <div style="text-align:center; background:rgba(255,255,255,.2); border-radius:14px; padding:1rem 1.5rem;">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:2.5rem; font-weight:700; line-height:1;">
+        {{ course.get_student_count }}
+      </div>
+      <div style="font-size:.75rem; opacity:.8;">alumno{{ course.get_student_count|pluralize:"s" }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- LEFT: Students list (professor) or quick links (student) -->
+  <div class="col-12 col-lg-7">
+
+    {% if user.is_professor and enrollments %}
+    <div class="pa-card mb-4">
+      <div class="pa-card-header">
+        <i class="bi bi-people-fill text-primary"></i>
+        <h6>Alumnos matriculados</h6>
+        <span class="badge bg-primary ms-auto">{{ enrollments.count }}</span>
+      </div>
+      <div style="max-height:350px; overflow-y:auto;">
+        <table class="table table-hover mb-0" style="font-size:.875rem;">
+          <thead style="position:sticky;top:0;background:white;">
+            <tr>
+              <th>Alumno</th>
+              <th>RUT</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in enrollments %}
+            <tr>
+              <td>
+                <div style="font-weight:600;">{{ enrollment.student.last_name }}, {{ enrollment.student.first_name }}</div>
+                {% if enrollment.student.email %}<div style="font-size:.72rem; color:#adb5bd;">{{ enrollment.student.email }}</div>{% endif %}
+              </td>
+              <td style="font-size:.82rem; color:#6c757d;">{{ enrollment.student.rut|default:"—" }}</td>
+              <td class="text-center">
+                <a href="{% url 'messaging:compose' %}?to={{ enrollment.student.pk }}&course={{ course.pk }}" class="btn btn-xs btn-outline-primary" style="border-radius:6px; font-size:.72rem; padding:.2rem .5rem;">
+                  <i class="bi bi-chat"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="pa-card-body pt-2 pb-3 d-flex gap-2">
+        <a href="{% url 'grades:gradebook' course.pk %}" class="btn btn-pa btn-sm">
+          <i class="bi bi-table me-1"></i>Ver libro de notas
+        </a>
+        <a href="{% url 'grades:export_excel' course.pk %}" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+          <i class="bi bi-file-earmark-excel me-1"></i>Exportar notas
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Announcements -->
+    <div class="pa-card mb-4">
+      <div class="pa-card-header">
+        <i class="bi bi-megaphone-fill text-warning"></i>
+        <h6>Anuncios</h6>
+        <a href="{% url 'messaging:announcements' course.pk %}" class="btn btn-sm btn-pa ms-auto">
+          {% if user.is_professor %}Gestionar{% else %}Ver todos{% endif %}
+        </a>
+      </div>
+      <div>
+        {% for ann in announcements %}
+        <div style="padding:.9rem 1.5rem; border-bottom:1px solid #f0f1f7; border-left:4px solid {{ course.color }};">
+          <div style="font-weight:600; font-size:.9rem;">
+            {% if ann.is_pinned %}<i class="bi bi-pin-fill text-warning me-1"></i>{% endif %}
+            {{ ann.title }}
+          </div>
+          <div style="font-size:.78rem; color:#6c757d; margin-top:2px;">{{ ann.created_at|date:"d \d\e F, Y · H:i" }}</div>
+          <p style="font-size:.82rem; margin-top:.5rem; color:#444; margin-bottom:0;">{{ ann.body|truncatechars:200 }}</p>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-muted" style="font-size:.85rem;">Sin anuncios publicados.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-folder2-open text-info"></i>
+        <h6>Material del curso</h6>
+        <a href="{% url 'materials:list' course.pk %}" class="btn btn-sm btn-pa-outline ms-auto">Ver todo</a>
+      </div>
+      <div class="pa-card-body">
+        <a href="{% url 'materials:list' course.pk %}" class="btn btn-outline-secondary w-100" style="border-radius:8px; font-size:.875rem;">
+          <i class="bi bi-folder me-2"></i>Ir a materiales del curso
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Evaluation dates -->
+  <div class="col-12 col-lg-5">
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-calendar-event-fill text-danger"></i>
+        <h6>Fechas de evaluación</h6>
+      </div>
+
+      {% if user.is_professor %}
+      <div style="padding:1rem 1.5rem; border-bottom:1px solid #f0f1f7;">
+        <form method="post" action="{% url 'courses:evaluation_add' course.pk %}">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-12">
+              <input type="text" name="title" class="form-control form-control-sm" placeholder="Ej: Prueba 1 – Unidad 1" required>
+            </div>
+            <div class="col-6">
+              <input type="date" name="date" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <input type="time" name="time" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <select name="event_type" class="form-select form-select-sm">
+                <option value="exam">Prueba/Examen</option>
+                <option value="quiz">Control</option>
+                <option value="task">Tarea</option>
+                <option value="project">Proyecto</option>
+                <option value="other">Otro</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <input type="text" name="location" class="form-control form-control-sm" placeholder="Sala / Lugar">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-pa btn-sm w-100">
+                <i class="bi bi-plus me-1"></i>Agregar fecha
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+
+      <div>
+        {% for ev in evaluation_dates %}
+        {% with today=request.GET.today %}
+        <div style="padding:.85rem 1.5rem; border-bottom:1px solid #f0f1f7; display:flex; gap:.75rem; align-items:flex-start;">
+          <div style="min-width:44px; text-align:center; background:#f5f6fa; border-radius:10px; padding:.4rem .3rem;">
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:1.1rem; font-weight:700; line-height:1;">{{ ev.date|date:"d" }}</div>
+            <div style="font-size:.65rem; text-transform:uppercase; color:#6c757d;">{{ ev.date|date:"M" }}</div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:.875rem;">{{ ev.title }}</div>
+            <div style="font-size:.75rem; color:#6c757d; margin-top:2px;">
+              <span class="badge bg-light text-dark">{{ ev.get_event_type_display }}</span>
+              {% if ev.time %} · {{ ev.time|time:"H:i" }}{% endif %}
+              {% if ev.location %} · <i class="bi bi-geo-alt me-1"></i>{{ ev.location }}{% endif %}
+            </div>
+          </div>
+          {% if user.is_professor %}
+          <a href="{% url 'courses:evaluation_delete' ev.pk %}" onclick="return confirm('¿Eliminar esta fecha?')" style="color:#ef233c; opacity:.5; font-size:.8rem;">
+            <i class="bi bi-trash"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% endwith %}
+        {% empty %}
+        <div class="text-center py-4 text-muted" style="font-size:.85rem;">
+          Sin fechas de evaluación registradas.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

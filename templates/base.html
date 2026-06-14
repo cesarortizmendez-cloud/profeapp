@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ProfeApp{% endblock %}</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --pa-blue: #4361ee;
+      --pa-blue-dark: #3a0ca3;
+      --pa-indigo: #4895ef;
+      --pa-teal: #4cc9f0;
+      --pa-green: #06d6a0;
+      --pa-red: #ef233c;
+      --pa-yellow: #ffd166;
+      --pa-sidebar-w: 260px;
+      --pa-sidebar-bg: #0f0e17;
+      --pa-sidebar-text: rgba(255,255,255,0.75);
+      --pa-sidebar-active: rgba(255,255,255,0.12);
+      --pa-body-bg: #f5f6fa;
+      --pa-card-radius: 14px;
+      --pa-font: 'Inter', sans-serif;
+      --pa-font-display: 'Space Grotesk', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: var(--pa-font);
+      background: var(--pa-body-bg);
+      min-height: 100vh;
+      color: #1a1a2e;
+    }
+
+    /* ── SIDEBAR ── */
+    .pa-sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--pa-sidebar-w);
+      background: var(--pa-sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .pa-sidebar-brand {
+      padding: 1.5rem 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      text-decoration: none;
+    }
+    .pa-sidebar-brand .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--pa-blue), var(--pa-teal));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: white;
+      flex-shrink: 0;
+    }
+    .pa-sidebar-brand .brand-name {
+      font-family: var(--pa-font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: white;
+      line-height: 1;
+    }
+    .pa-sidebar-brand .brand-sub {
+      font-size: .7rem;
+      color: rgba(255,255,255,.4);
+      font-weight: 400;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .pa-nav-section {
+      padding: .5rem 1rem .25rem;
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+    .pa-sidebar .nav-link {
+      color: var(--pa-sidebar-text);
+      padding: .6rem 1.25rem;
+      border-radius: 8px;
+      margin: 1px .75rem;
+      font-size: .875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      transition: all .15s;
+    }
+    .pa-sidebar .nav-link:hover,
+    .pa-sidebar .nav-link.active {
+      background: var(--pa-sidebar-active);
+      color: white;
+    }
+    .pa-sidebar .nav-link .bi { font-size: 1rem; flex-shrink: 0; }
+    .badge-sidebar {
+      margin-left: auto;
+      background: var(--pa-red);
+      font-size: .65rem;
+      padding: .2em .5em;
+      border-radius: 20px;
+    }
+
+    .pa-sidebar-footer {
+      margin-top: auto;
+      padding: 1rem;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .pa-sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .5rem .75rem;
+      border-radius: 10px;
+      text-decoration: none;
+      color: rgba(255,255,255,.8);
+      transition: background .15s;
+    }
+    .pa-sidebar-user:hover { background: rgba(255,255,255,.08); color: white; }
+    .pa-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pa-blue), var(--pa-indigo));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; color: white;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .pa-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .pa-avatar-info .name { font-weight: 600; font-size: .8rem; line-height: 1.2; }
+    .pa-avatar-info .role { font-size: .7rem; color: rgba(255,255,255,.4); }
+
+    /* ── MAIN CONTENT ── */
+    .pa-main {
+      margin-left: var(--pa-sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .pa-topbar {
+      background: white;
+      border-bottom: 1px solid #e8eaf0;
+      padding: .85rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .pa-topbar-title {
+      font-family: var(--pa-font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+    .pa-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+
+    .pa-content { padding: 2rem; flex: 1; }
+
+    /* ── CARDS ── */
+    .pa-card {
+      background: white;
+      border-radius: var(--pa-card-radius);
+      border: 1px solid #e8eaf0;
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .pa-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.07); }
+    .pa-card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #f0f1f7;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .pa-card-header h5, .pa-card-header h6 {
+      margin: 0;
+      font-family: var(--pa-font-display);
+      font-weight: 700;
+    }
+    .pa-card-body { padding: 1.5rem; }
+
+    /* ── COURSE CARDS ── */
+    .course-card {
+      border-radius: var(--pa-card-radius);
+      overflow: hidden;
+      border: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .course-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.12); }
+    .course-card-stripe {
+      height: 5px;
+    }
+    .course-card-body { padding: 1.25rem; }
+    .course-name {
+      font-family: var(--pa-font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1a1a2e;
+      margin-bottom: .25rem;
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      background: white;
+      border-radius: var(--pa-card-radius);
+      padding: 1.25rem 1.5rem;
+      border: 1px solid #e8eaf0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .stat-value { font-family: var(--pa-font-display); font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: .78rem; color: #6c757d; margin-top: 2px; }
+
+    /* ── GRADE TABLE ── */
+    .grade-table-wrapper { overflow-x: auto; }
+    .grade-table { min-width: 700px; font-size: .875rem; }
+    .grade-table th { background: #f5f6fa; font-weight: 600; border-bottom: 2px solid #e8eaf0; white-space: nowrap; vertical-align: middle; }
+    .grade-input {
+      width: 65px;
+      text-align: center;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: .2rem .4rem;
+      font-size: .85rem;
+      transition: border-color .15s;
+    }
+    .grade-input:focus { outline: none; border-color: var(--pa-blue); box-shadow: 0 0 0 3px rgba(67,97,238,.15); }
+    .grade-input.saved { border-color: var(--pa-green); background: #f0fff8; }
+    .grade-input.error { border-color: var(--pa-red); background: #fff5f5; }
+    .avg-badge {
+      font-family: var(--pa-font-display);
+      font-weight: 700;
+      font-size: .95rem;
+      padding: .3em .7em;
+      border-radius: 8px;
+    }
+    .avg-pass { background: #d4edda; color: #155724; }
+    .avg-fail { background: #f8d7da; color: #721c24; }
+    .avg-none { background: #e9ecef; color: #6c757d; }
+
+    /* ── MESSAGES ── */
+    .message-item {
+      padding: .9rem 1.25rem;
+      border-bottom: 1px solid #f0f1f7;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: background .15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .message-item:hover { background: #f8f9ff; }
+    .message-item.unread .message-subject { font-weight: 700; }
+    .message-subject { font-size: .9rem; color: #1a1a2e; }
+    .message-meta { font-size: .75rem; color: #6c757d; margin-top: 2px; }
+    .unread-dot { width: 8px; height: 8px; background: var(--pa-blue); border-radius: 50%; margin-top: .3rem; flex-shrink: 0; }
+
+    /* ── BUTTONS ── */
+    .btn-pa {
+      background: var(--pa-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      padding: .5rem 1.1rem;
+      font-size: .875rem;
+      transition: all .15s;
+    }
+    .btn-pa:hover { background: #3451d1; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(67,97,238,.3); }
+    .btn-pa-outline {
+      background: transparent;
+      color: var(--pa-blue);
+      border: 1.5px solid var(--pa-blue);
+      border-radius: 8px;
+      font-weight: 600;
+      padding: .5rem 1.1rem;
+      font-size: .875rem;
+      transition: all .15s;
+    }
+    .btn-pa-outline:hover { background: var(--pa-blue); color: white; }
+
+    /* ── ALERTS ── */
+    .alert { border-radius: 10px; border: none; font-size: .875rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .pa-sidebar { transform: translateX(-100%); transition: transform .3s; }
+      .pa-sidebar.open { transform: translateX(0); }
+      .pa-main { margin-left: 0; }
+      .pa-content { padding: 1rem; }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- ── SIDEBAR ── -->
+<nav class="pa-sidebar">
+  <a href="{% url 'dashboard:home' %}" class="pa-sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
+    <div>
+      <div class="brand-name">ProfeApp</div>
+      <span class="brand-sub">Gestión académica</span>
+    </div>
+  </a>
+
+  <div class="pa-nav-section">Principal</div>
+  <a href="{% url 'dashboard:home' %}" class="nav-link {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'home' %}active{% endif %}">
+    <i class="bi bi-grid-fill"></i> Dashboard
+  </a>
+
+  {% if user.is_professor %}
+  <div class="pa-nav-section">Mis Cursos</div>
+  {% for course in sidebar_courses %}
+  <a href="{% url 'dashboard:course_detail' course.pk %}" class="nav-link" style="padding-left: 1.5rem;">
+    <span style="width:10px;height:10px;border-radius:50%;background:{{ course.color }};flex-shrink:0;"></span>
+    {{ course.name|truncatechars:22 }}
+  </a>
+  {% endfor %}
+  <a href="{% url 'courses:create' %}" class="nav-link">
+    <i class="bi bi-plus-circle"></i> Nuevo curso
+  </a>
+  {% else %}
+  <div class="pa-nav-section">Mis Cursos</div>
+  {% for enrollment in sidebar_enrollments %}
+  <a href="{% url 'dashboard:course_detail' enrollment.course.pk %}" class="nav-link" style="padding-left: 1.5rem;">
+    <span style="width:10px;height:10px;border-radius:50%;background:{{ enrollment.course.color }};flex-shrink:0;"></span>
+    {{ enrollment.course.name|truncatechars:22 }}
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  <div class="pa-nav-section">Comunicación</div>
+  <a href="{% url 'messaging:inbox' %}" class="nav-link {% if request.resolver_match.namespace == 'messaging' %}active{% endif %}">
+    <i class="bi bi-envelope-fill"></i> Mensajes
+    {% if unread_messages_count %}
+    <span class="badge-sidebar">{{ unread_messages_count }}</span>
+    {% endif %}
+  </a>
+
+  <div class="pa-sidebar-footer">
+    <a href="{% url 'accounts:profile' %}" class="pa-sidebar-user">
+      <div class="pa-avatar">
+        {% if user.avatar %}
+          <img src="{{ user.avatar.url }}" alt="">
+        {% else %}
+          {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div class="pa-avatar-info">
+        <div class="name">{{ user.get_full_name|truncatechars:20 }}</div>
+        <div class="role">{{ user.get_role_display }}</div>
+      </div>
+    </a>
+    <a href="{% url 'accounts:logout' %}" class="nav-link mt-1" style="font-size:.8rem;">
+      <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+    </a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="pa-main">
+  <div class="pa-topbar">
+    <button class="btn btn-sm btn-link d-md-none p-0" id="sidebarToggle">
+      <i class="bi bi-list" style="font-size:1.4rem;"></i>
+    </button>
+    <h1 class="pa-topbar-title">{% block page_title %}ProfeApp{% endblock %}</h1>
+    <div class="pa-topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+  </div>
+
+  <div class="pa-content">
+    {% for msg in messages %}
+    <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+    document.querySelector('.pa-sidebar').classList.toggle('open');
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

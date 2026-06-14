@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Materiales – {{ course.name }}{% endblock %}
+{% block page_title %}Material del Curso{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <span style="width:12px;height:12px;border-radius:50%;background:{{ course.color }};"></span>
+  <strong>{{ course.name }}</strong>
+  <a href="{% url 'dashboard:course_detail' course.pk %}" class="btn btn-sm btn-outline-secondary ms-auto" style="border-radius:8px;">← Volver</a>
+</div>
+
+<div class="row g-4">
+  {% if user.is_professor %}
+  <div class="col-12 col-lg-4">
+    <div class="pa-card">
+      <div class="pa-card-header"><i class="bi bi-upload text-primary"></i><h6>Subir material</h6></div>
+      <div class="pa-card-body">
+        <form method="post" action="{% url 'materials:upload' course.pk %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Título *</label>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tipo</label>
+            <select name="material_type" class="form-select">
+              <option value="document">Documento</option>
+              <option value="presentation">Presentación</option>
+              <option value="guide">Guía</option>
+              <option value="exercise">Ejercicio</option>
+              <option value="video">Video (enlace)</option>
+              <option value="link">Enlace web</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Archivo</label>
+            <input type="file" name="file" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">O enlace externo</label>
+            <input type="url" name="url" class="form-control" placeholder="https://...">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Descripción</label>
+            <textarea name="description" class="form-control" rows="2" style="border-radius:10px;"></textarea>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" name="is_visible" class="form-check-input" id="visibleCheck" checked>
+            <label class="form-check-label" for="visibleCheck">Visible para alumnos</label>
+          </div>
+          <button type="submit" class="btn btn-pa w-100">Subir material</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+  {% else %}
+  <div class="col-12">
+  {% endif %}
+
+    {% if materials %}
+    <div class="row g-3">
+      {% for mat in materials %}
+      <div class="col-12 col-sm-6">
+        <div class="pa-card h-100" style="{% if not mat.is_visible %}opacity:.6;{% endif %}">
+          <div class="pa-card-body">
+            <div class="d-flex align-items-start gap-3">
+              <div style="width:44px;height:44px;border-radius:12px;background:#eef0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;color:#4361ee;">
+                <i class="bi {{ mat.get_icon }}"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:.9rem;">{{ mat.title }}</div>
+                <div style="font-size:.72rem;color:#adb5bd;margin-top:2px;">
+                  {{ mat.get_material_type_display }}
+                  {% if not mat.is_visible and user.is_professor %}
+                    <span class="badge bg-warning text-dark ms-1">Oculto</span>
+                  {% endif %}
+                </div>
+                {% if mat.description %}
+                <p style="font-size:.78rem;color:#6c757d;margin-top:.4rem;margin-bottom:.5rem;">{{ mat.description|truncatechars:80 }}</p>
+                {% endif %}
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                  {% if mat.file %}
+                  <a href="{{ mat.file.url }}" target="_blank" class="btn btn-sm btn-pa" style="font-size:.75rem;">
+                    <i class="bi bi-download me-1"></i>Descargar
+                  </a>
+                  {% endif %}
+                  {% if mat.url %}
+                  <a href="{{ mat.url }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:.75rem;">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Abrir enlace
+                  </a>
+                  {% endif %}
+                  {% if user.is_professor %}
+                  <a href="{% url 'materials:toggle' mat.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.75rem;" title="{% if mat.is_visible %}Ocultar{% else %}Mostrar{% endif %}">
+                    <i class="bi {% if mat.is_visible %}bi-eye-slash{% else %}bi-eye{% endif %}"></i>
+                  </a>
+                  <a href="{% url 'materials:delete' mat.pk %}" onclick="return confirm('¿Eliminar este material?')" class="btn btn-sm btn-outline-danger" style="border-radius:8px;font-size:.75rem;">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="pa-card">
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-folder2-open" style="font-size:3rem;opacity:.3;"></i>
+        <p class="mt-3">Sin materiales publicados aún.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

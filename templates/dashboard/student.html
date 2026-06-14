@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Mis Cursos – ProfeApp{% endblock %}
+{% block page_title %}Mis Cursos{% endblock %}
+
+{% block content %}
+{% if not course_data %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-mortarboard" style="font-size:4rem; opacity:.3;"></i>
+  <h5 class="mt-3">No estás matriculado en ningún curso</h5>
+  <p>Contacta a tu profesor para que te agregue.</p>
+</div>
+{% endif %}
+
+{% for item in course_data %}
+<div class="pa-card mb-4">
+  <!-- Course Header -->
+  <div style="background: linear-gradient(135deg, {{ item.course.color }}, {{ item.course.color }}cc); padding: 1.5rem 2rem; color: white;">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+      <div>
+        <h4 style="font-family:'Space Grotesk',sans-serif; font-weight:700; margin:0;">{{ item.course.name }}</h4>
+        <div style="opacity:.8; font-size:.85rem; margin-top:.25rem;">
+          {% if item.course.code %}Código: {{ item.course.code }} &nbsp;·&nbsp;{% endif %}
+          {% if item.course.section %}Sección: {{ item.course.section }} &nbsp;·&nbsp;{% endif %}
+          {{ item.course.get_period_display_short }}
+          {% if item.course.university %}&nbsp;·&nbsp; {{ item.course.university.name }}{% endif %}
+        </div>
+        <div style="opacity:.75; font-size:.8rem; margin-top:.15rem;">
+          <i class="bi bi-person me-1"></i>Prof. {{ item.course.professor.get_full_name }}
+        </div>
+      </div>
+      <!-- Average Badge -->
+      {% if item.report and item.report.weighted_average %}
+      <div style="text-align:center; background:rgba(255,255,255,.2); border-radius:14px; padding:.75rem 1.5rem; backdrop-filter:blur(4px);">
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; line-height:1;">
+          {{ item.report.weighted_average }}
+        </div>
+        <div style="font-size:.7rem; opacity:.8; margin-top:2px;">
+          {% if item.report.is_passing %}✓ APROBADO{% else %}✗ REPROBADO{% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div style="text-align:center; background:rgba(255,255,255,.15); border-radius:14px; padding:.75rem 1.5rem;">
+        <div style="font-size:1rem; opacity:.7;">Sin notas</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="pa-card-body">
+    <div class="row g-3">
+      <!-- Quick links -->
+      <div class="col-12 col-md-4">
+        <div style="display:grid; gap:.5rem;">
+          <a href="{% url 'grades:gradebook' item.course.pk %}" class="btn btn-pa text-start">
+            <i class="bi bi-table me-2"></i>Ver mis notas
+          </a>
+          <a href="{% url 'materials:list' item.course.pk %}" class="btn btn-outline-secondary text-start" style="border-radius:8px;">
+            <i class="bi bi-folder2-open me-2"></i>Material del curso
+          </a>
+          <a href="{% url 'messaging:announcements' item.course.pk %}" class="btn btn-outline-secondary text-start" style="border-radius:8px;">
+            <i class="bi bi-megaphone me-2"></i>Anuncios
+          </a>
+          <a href="{% url 'messaging:compose' %}?to={{ item.course.professor.pk }}&course={{ item.course.pk }}" class="btn btn-outline-secondary text-start" style="border-radius:8px;">
+            <i class="bi bi-chat me-2"></i>Escribir al profesor
+          </a>
+        </div>
+      </div>
+
+      <!-- Upcoming evaluations -->
+      <div class="col-12 col-md-4">
+        <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; margin-bottom:.5rem;">
+          <i class="bi bi-calendar-event me-1"></i>Próximas evaluaciones
+        </div>
+        {% if item.upcoming %}
+          {% for ev in item.upcoming %}
+          <div style="padding:.5rem .75rem; background:#f8f9ff; border-radius:8px; margin-bottom:.4rem; font-size:.82rem;">
+            <div style="font-weight:600;">{{ ev.title }}</div>
+            <div style="color:#6c757d;">{{ ev.date|date:"l d \d\e F" }}{% if ev.time %} · {{ ev.time|time:"H:i" }}{% endif %}
+            {% if ev.location %} · {{ ev.location }}{% endif %}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="font-size:.82rem; color:#adb5bd;">Sin evaluaciones próximas.</div>
+        {% endif %}
+      </div>
+
+      <!-- Announcements -->
+      <div class="col-12 col-md-4">
+        <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; margin-bottom:.5rem;">
+          <i class="bi bi-megaphone me-1"></i>Anuncios recientes
+        </div>
+        {% if item.announcements %}
+          {% for ann in item.announcements %}
+          <div style="padding:.5rem .75rem; background:#f8f9ff; border-radius:8px; margin-bottom:.4rem; font-size:.82rem; border-left:3px solid {{ item.course.color }};">
+            <div style="font-weight:600;">{{ ann.title }}</div>
+            <div style="color:#6c757d;">{{ ann.created_at|date:"d M" }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="font-size:.82rem; color:#adb5bd;">Sin anuncios recientes.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}Libro de Notas – {{ course.name }}{% endblock %}
+{% block page_title %}📊 Libro de Notas{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'grades:export_excel' course.pk %}" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+    <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
+  </a>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .col-weight-warning { background: #fff3cd !important; }
+  .col-header-cell { min-width: 100px; max-width: 130px; }
+  .publish-toggle { cursor:pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Course Info Bar -->
+<div class="pa-card mb-4">
+  <div class="pa-card-body d-flex align-items-center gap-3 flex-wrap">
+    <div style="width:14px;height:14px;border-radius:50%;background:{{ course.color }};flex-shrink:0;"></div>
+    <div>
+      <strong style="font-family:'Space Grotesk',sans-serif;">{{ course.name }}</strong>
+      {% if course.section %}<span class="badge bg-light text-dark ms-2">Sec. {{ course.section }}</span>{% endif %}
+      <span class="text-muted ms-2" style="font-size:.82rem;">{{ course.get_period_display_short }}</span>
+    </div>
+    <div class="ms-auto d-flex gap-2 flex-wrap">
+      <a href="{% url 'dashboard:course_detail' course.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">← Volver al curso</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eef0ff;"><i class="bi bi-people-fill" style="color:#4361ee;"></i></div>
+      <div><div class="stat-value">{{ stats.students_count }}</div><div class="stat-label">Alumnos</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f8f2;"><i class="bi bi-bar-chart-fill" style="color:#06d6a0;"></i></div>
+      <div>
+        <div class="stat-value">{% if stats.average %}{{ stats.average|floatformat:1 }}{% else %}—{% endif %}</div>
+        <div class="stat-label">Promedio del curso</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f8f2;"><i class="bi bi-check-circle-fill" style="color:#06d6a0;"></i></div>
+      <div><div class="stat-value">{{ stats.passing_count }}</div><div class="stat-label">Aprobados ({{ stats.passing_rate }}%)</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#ffeef0;"><i class="bi bi-x-circle-fill" style="color:#ef233c;"></i></div>
+      <div><div class="stat-value">{{ stats.failing_count }}</div><div class="stat-label">Reprobados</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Weight warning -->
+{% if columns and not weight_ok %}
+<div class="alert alert-warning mb-3">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  <strong>¡Atención!</strong> Los pesos actuales suman <strong>{{ total_weight }}%</strong>. Para que el promedio ponderado sea correcto, deben sumar exactamente 100%.
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- GRADE TABLE -->
+  <div class="col-12 col-xl-9">
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-table text-primary"></i>
+        <h6>Notas</h6>
+        <!-- Import button -->
+        <button class="btn btn-sm btn-outline-primary ms-auto me-2" style="border-radius:8px;" data-bs-toggle="modal" data-bs-target="#importModal">
+          <i class="bi bi-upload me-1"></i>Importar alumnos (Excel)
+        </button>
+      </div>
+      <div class="grade-table-wrapper pa-card-body pt-0">
+        <table class="table grade-table align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="min-width:180px;">Alumno</th>
+              {% for col in columns %}
+              <th class="text-center col-header-cell {% if not col.is_published %}text-muted{% endif %}">
+                <div>{{ col.name }}</div>
+                <div style="font-size:.68rem; color:#6c757d; font-weight:400;">
+                  {{ col.weight }}%
+                  {% if col.is_published %}
+                    <i class="bi bi-eye-fill text-success publish-toggle" title="Publicada (clic para ocultar)" onclick="toggleColumn({{ col.pk }})"></i>
+                  {% else %}
+                    <i class="bi bi-eye-slash text-muted publish-toggle" title="Oculta (clic para publicar)" onclick="toggleColumn({{ col.pk }})"></i>
+                  {% endif %}
+                  <a href="{% url 'grades:column_delete' col.pk %}" onclick="return confirm('¿Eliminar columna «{{ col.name }}»?')" style="color:#ef233c; text-decoration:none; margin-left:4px;">
+                    <i class="bi bi-trash" style="font-size:.7rem;"></i>
+                  </a>
+                </div>
+                {% if col.date %}<div style="font-size:.65rem; color:#adb5bd;">{{ col.date|date:"d/m" }}</div>{% endif %}
+              </th>
+              {% endfor %}
+              <th class="text-center" style="min-width:110px;">Promedio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in grade_matrix %}
+            <tr>
+              <td>
+                <div style="font-weight:600; font-size:.875rem;">{{ row.student.last_name }}, {{ row.student.first_name }}</div>
+                {% if row.student.rut %}<div style="font-size:.72rem; color:#adb5bd;">{{ row.student.rut }}</div>{% endif %}
+              </td>
+              {% for col in columns %}
+              <td class="text-center">
+                {% with grade_info=row.grades|default_if_none:'' %}
+                <input
+                  type="number"
+                  class="grade-input"
+                  min="1" max="{{ col.max_score }}" step="0.1"
+                  data-student="{{ row.student.pk }}"
+                  data-column="{{ col.pk }}"
+                  data-avg-cell="avg-{{ row.student.pk }}"
+                  {% if row.grades %}
+                    {% with g=row.grades %}
+                      {% for cid, ginfo in g.items %}{% if cid == col.pk %}value="{{ ginfo.score|default:'' }}"{% endif %}{% endfor %}
+                    {% endwith %}
+                  {% endif %}
+                  placeholder="—"
+                >
+                {% endwith %}
+              </td>
+              {% endfor %}
+              <td class="text-center">
+                <span class="avg-badge {% if row.average %}{% if row.is_passing %}avg-pass{% else %}avg-fail{% endif %}{% else %}avg-none{% endif %}"
+                      id="avg-{{ row.student.pk }}">
+                  {{ row.average|default:"—" }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="{{ columns.count|add:2 }}" class="text-center py-4 text-muted">
+                <i class="bi bi-people" style="font-size:2rem; opacity:.3;"></i>
+                <p class="mt-2 mb-0">No hay alumnos matriculados.<br>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#importModal">Importa desde Excel</a> o agrega manualmente.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD COLUMN PANEL -->
+  <div class="col-12 col-xl-3">
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-plus-circle text-primary"></i>
+        <h6>Nueva columna</h6>
+      </div>
+      <div class="pa-card-body">
+        <form method="post" action="{% url 'grades:column_create' course.pk %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.82rem; font-weight:600;">Nombre *</label>
+            <input type="text" name="name" class="form-control form-control-sm" placeholder="Ej: Prueba 1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.82rem; font-weight:600;">Tipo</label>
+            <select name="grade_type" class="form-select form-select-sm">
+              <option value="exam">Prueba / Examen</option>
+              <option value="quiz">Control</option>
+              <option value="task">Tarea</option>
+              <option value="project">Proyecto</option>
+              <option value="participation">Participación</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.82rem; font-weight:600;">Ponderación (%)</label>
+            <input type="number" name="weight" class="form-control form-control-sm" min="0" max="100" step="0.5" value="0" required>
+            <div class="form-text">Pesos actuales: <strong>{{ total_weight }}%</strong></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.82rem; font-weight:600;">Fecha</label>
+            <input type="date" name="date" class="form-control form-control-sm">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.82rem; font-weight:600;">Descripción</label>
+            <textarea name="description" class="form-control form-control-sm" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-pa w-100">Agregar columna</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+      <div class="modal-header" style="background:#4361ee; color:white; border:none;">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2"></i>Importar alumnos desde Excel</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info" style="font-size:.82rem;">
+          <strong>Formato esperado:</strong> El archivo Excel debe tener columnas con los encabezados:<br>
+          <code>RUT</code>, <code>Apellidos</code>, <code>Nombre</code>, <code>Email</code> (opcional)<br>
+          El orden puede variar. La contraseña inicial de cada alumno será su RUT.
+        </div>
+        <form method="post" action="{% url 'grades:import_students' course.pk %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Seleccionar archivo Excel (.xlsx)</label>
+            <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls" required>
+          </div>
+          <button type="submit" class="btn btn-pa w-100">
+            <i class="bi bi-upload me-2"></i>Importar alumnos
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── AUTOSAVE GRADES ──
+const SAVE_URL = "{% url 'grades:save_grade' %}";
+const CSRF = "{{ csrf_token }}";
+
+let saveTimeout = {};
+
+document.querySelectorAll('.grade-input').forEach(input => {
+  input.addEventListener('change', function() {
+    const studentId = this.dataset.student;
+    const columnId = this.dataset.column;
+    const avgCellId = this.dataset.avgCell;
+    const value = this.value.trim();
+    const key = `${studentId}-${columnId}`;
+
+    clearTimeout(saveTimeout[key]);
+    this.style.borderColor = '#ffd166';
+
+    saveTimeout[key] = setTimeout(() => {
+      saveGrade(this, studentId, columnId, value, avgCellId);
+    }, 700);
+  });
+});
+
+async function saveGrade(input, studentId, columnId, score, avgCellId) {
+  try {
+    const resp = await fetch(SAVE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ student_id: studentId, column_id: columnId, score: score }),
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      input.classList.remove('error');
+      input.classList.add('saved');
+      input.style.borderColor = '';
+      setTimeout(() => input.classList.remove('saved'), 1500);
+
+      // Update average cell
+      const avgCell = document.getElementById(avgCellId);
+      if (avgCell && data.average) {
+        avgCell.textContent = data.average;
+        avgCell.className = 'avg-badge ' + (data.is_passing ? 'avg-pass' : 'avg-fail');
+      }
+    } else {
+      input.classList.add('error');
+      input.style.borderColor = '';
+      alert('Error al guardar: ' + data.error);
+    }
+  } catch(e) {
+    input.classList.add('error');
+  }
+}
+
+function toggleColumn(columnId) {
+  window.location.href = `/grades/column/${columnId}/toggle/`;
+}
+</script>
+{% endblock %}

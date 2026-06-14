@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Redactar mensaje – ProfeApp{% endblock %}
+{% block page_title %}Redactar mensaje{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="pa-card">
+      <div class="pa-card-header">
+        <i class="bi bi-pencil-square text-primary"></i>
+        <h6>Nuevo mensaje</h6>
+      </div>
+      <div class="pa-card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Para *</label>
+            <select name="recipient" class="form-select" required>
+              <option value="">— Selecciona un destinatario —</option>
+              {% for r in recipients %}
+              <option value="{{ r.pk }}" {% if pre_recipient == r.pk|stringformat:"s" %}selected{% endif %}>
+                {{ r.get_full_name }} ({{ r.get_role_display }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if courses %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Curso relacionado</label>
+            <select name="course" class="form-select">
+              <option value="">— Sin especificar —</option>
+              {% for c in courses %}
+              <option value="{{ c.pk }}" {% if pre_course == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Asunto *</label>
+            <input type="text" name="subject" class="form-control" placeholder="Asunto del mensaje" required>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold">Mensaje *</label>
+            <textarea name="body" class="form-control" rows="7" placeholder="Escribe tu mensaje aquí..." required style="border-radius:10px;"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-pa">
+              <i class="bi bi-send me-1"></i>Enviar mensaje
+            </button>
+            <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-secondary" style="border-radius:8px;">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

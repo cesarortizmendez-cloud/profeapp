@@ -1,0 +1,26 @@
+databases:
+  - name: profeapp-db
+    databaseName: profeapp_db
+    user: profeapp_user
+    plan: free
+
+services:
+  - type: web
+    name: profeapp
+    plan: free
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
+    startCommand: "gunicorn profeapp.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: profeapp-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
